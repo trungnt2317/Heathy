@@ -8,80 +8,25 @@ import android.util.Log;
 
 import com.betomaluje.miband.ActionCallback;
 import com.betomaluje.miband.MiBand;
+import com.betomaluje.miband.MiBandService;
 import com.betomaluje.miband.bluetooth.NotificationConstants;
+import com.betomaluje.miband.model.VibrationMode;
 
 public class MainActivity extends AppCompatActivity {
 
-    private boolean isConnected = false;
+    private MiBand miBand = MiBand.getInstance(MainActivity.this);
 
     private final String TAG = getClass().getSimpleName();
 
-    private MiBand miBand;
+    private boolean isConnected = false;
 
-    private int BT_REQUEST_CODE = 1001;
-
-    private void connectToMiBand() {
-        if (!miBand.isConnected()) {
-            miBand.connect(myConnectionCallback);
-        }
-
-        // btn_connect.setEnabled(false);
-
-        // textView_status.setText("Connecting...");
-    }
-
-    private ActionCallback myConnectionCallback = new ActionCallback() {
-        @Override
-        public void onSuccess(Object data) {
-            // Log.d(TAG, "Connected with Mi Band!");
-
-            isConnected = true;
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    // startMiBand();
-
-                }
-            });
-        }
-
-        @Override
-        public void onFail(int errorCode, String msg) {
-            // Log.e(TAG, "Fail: " + msg);
-            isConnected = false;
-
-            if (errorCode == NotificationConstants.BLUETOOTH_OFF) {
-                //turn on bluetooth
-                //Log.d(TAG, "turn on Bluetooth");
-                startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), BT_REQUEST_CODE, null);
-            } else {
-                //Log.d(TAG, "not found");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //stopMiBand();
-                    }
-                });
-            }
-        }
-    };
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        miBand = MiBand.getInstance(MainActivity.this);
-
-        //connectToMiBand();
+    protected void connect() {
         if (!miBand.isConnected()) {
             miBand.connect(new ActionCallback() {
                 @Override
                 public void onSuccess(Object data) {
                     Log.d(TAG, "Connected with Mi Band!");
-                    //show SnackBar/Toast or something
+                    isConnected = true;
                 }
 
                 @Override
@@ -92,6 +37,17 @@ public class MainActivity extends AppCompatActivity {
         } else {
             miBand.disconnect();
         }
+    }
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        connect();
+
+        if (isConnected) {
+            miBand.startVibration(VibrationMode.VIBRATION_WITH_LED);
+        }
     }
 }
